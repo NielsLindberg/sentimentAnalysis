@@ -1,0 +1,1 @@
+Continued the text analytics project in a pycharm IDE environment, as i wanted some more debugging features and access to objects.
