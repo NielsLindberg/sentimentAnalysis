@@ -4,6 +4,7 @@ Originally created by Mitchell Stewart.
 <https://gist.github.com/mylsb/10294040>
 """
 import facebook
+from facebook_secrets import secret
 import requests
 import json
 import urllib.request
@@ -16,15 +17,10 @@ def some_action(post):
     """
     data.append(post)
 
-# You'll need an access token here to do anything.  You can get a temporary one
-# here: https://developers.facebook.com/tools/explorer/
-access_token = 'EAACEdEose0cBABRkHA3B7WWSIUOEH8qOjdrzUeWlL5iZBHgSX6lP4N5WEBasGxVU8si62dXH5LDA3ZCLed5B4mBWxFnP7UmYYOWGuNZCX4zEoqYoQFDsSaNRf7j3QmoNxw6PYhXnd1rJzDXBOtOZAJFrYultSfXOOXS17L3x5gZDZD'
 # Look at Bill Gates's profile for this example by using his Facebook id.
 user = 'eclipse'
 
-urleey = "https://graph.facebook.com/oauth/access_token?client_id=1796256433992124&client_secret=b77c8e647c2802263f1d2a54ca8a7305&grant_type=client_credentials"
-
-response = requests.get(urleey)
+response = requests.get(secret.facebook_token_url)
 token = response.text.replace('access_token=', '')
 
 graph = facebook.GraphAPI(token)
