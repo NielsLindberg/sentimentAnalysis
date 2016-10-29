@@ -4,6 +4,8 @@ from nltk import precision, recall
 from nltk.classify import NaiveBayesClassifier
 from nltk.corpus import movie_reviews
 import tokinator
+from nltk.corpus.reader import CategorizedPlaintextCorpusReader
+import os
 
 def evaluate(corp, feature_detector=tokinator.bag_of_best_bigram_words):
     negids = corp.fileids('neg')
@@ -40,5 +42,12 @@ methods = list([tokinator.bag_of_words, tokinator.bag_of_non_stopwords,
                 tokinator.bag_of_bigrams_words, tokinator.bag_of_best_bigram_words,
                 tokinator.bag_of_best_words])
 
+current_dir = os.getcwd()
+os.chdir('D:/nltk_data/corpora/moviez')
+
+reader = CategorizedPlaintextCorpusReader('.', r'.*\.txt',
+                                          cat_pattern=r'(\w+)/*')
 for method in methods:
-    evaluate(movie_reviews, method)
+    evaluate(reader, method)
+
+os.chdir(current_dir)
