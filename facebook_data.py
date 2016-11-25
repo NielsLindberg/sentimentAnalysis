@@ -18,7 +18,7 @@ def some_action(post):
     data.append(post)
 
 # Look at Bill Gates's profile for this example by using his Facebook id.
-user = 'eclipse'
+user = 'NorwegianDanmark'
 
 response = requests.get(secret.facebook_token_url)
 token = response.text.replace('access_token=', '')
