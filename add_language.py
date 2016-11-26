@@ -22,11 +22,11 @@ def add_language_to_csv(in_file_path, text_column=21, encoding='latin', delim=';
             row.append('Language')
             new_data.append(row)
             current_row = 1
-            print('Adding language to ' + in_file_path)
+            print('\nAdding language to ' + in_file_path)
             print('Total rows: ' + str(total_rows))
 
             for row in reader:
-                if len(row[text_column]) > 10:
+                if len(row[text_column]) > 0:
                     row.append(language_detection.detect_language(row[text_column]))
 
                 else:
@@ -38,13 +38,13 @@ def add_language_to_csv(in_file_path, text_column=21, encoding='latin', delim=';
 
             writer.writerows(new_data)
 
-in_files = ['data/FullRawFile_airberlin_71']
+in_files = ['FullRawFile_easyJet_66', 'FullRawFile_Norwegian_74', 'FullRawFile_Ryanair_94', 'FullRawFile_SAS_73']
 
 for in_file in in_files:
     try:
-        os.remove(in_file + '_lang.csv')
+        os.remove('data/' + in_file + '_lang.csv')
 
     except FileNotFoundError:
         pass
 
-    add_language_to_csv(in_file)
+    add_language_to_csv('data/' + in_file)

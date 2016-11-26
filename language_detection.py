@@ -1,6 +1,8 @@
 import sys
 from nltk import wordpunct_tokenize
 from nltk.corpus import stopwords
+from nltk.corpus import words
+from nltk.tag import pos_tag
 
 
 def _calculate_languages_ratios(text):
@@ -16,6 +18,7 @@ def _calculate_languages_ratios(text):
     """
 
     languages_ratios = {}
+    languages_ratios['url'] = 0
 
     '''
     nltk.wordpunct_tokenize() splits all punctuations into separate tokens
@@ -24,7 +27,15 @@ def _calculate_languages_ratios(text):
     ['That', "'", 's', 'thirty', 'minutes', 'away', '.', 'I', "'", 'll', 'be', 'there', 'in', 'ten', '.']
     '''
 
-    tokens = wordpunct_tokenize(text)
+    whitespace_tokens = text.split()
+    tokens = []
+    for token in whitespace_tokens:
+        if 'http' in token or 'www' in token or '@' in token:
+            tokens.append(token)
+            languages_ratios['url'] += 1
+        else:
+            tokens.extend(wordpunct_tokenize(token))
+
     words = [word.lower() for word in tokens]
 
     # Compute per language included in nltk number of unique stopwords appearing in analyzed text
@@ -54,9 +65,20 @@ def detect_language(text):
     """
 
     ratios = _calculate_languages_ratios(text)
-
     most_rated_language = max(ratios, key=ratios.get)
-
+    if ratios[most_rated_language] == 0:
+        tagged_sent = pos_tag(text.split())
+        if len([word for word, pos in tagged_sent if pos == 'NNP']) > 1:
+            most_rated_language = 'name'
+        else:
+            split_tokens = wordpunct_tokenize(text)
+            english_words = words.words()
+            if [word for word in split_tokens if word.lower() in english_words]:
+                most_rated_language = 'english'
+            else:
+                most_rated_language = 'undefined'
+    elif ratios[most_rated_language] == ratios['english']:
+        most_rated_language = 'english'
     return most_rated_language
 
 
