@@ -1,0 +1,4 @@
+SNr;WallId;MonthNr;TotalPosts;TotalComments;TotalLikes;TotalSharers;TotalCommentLikes;TotalCommentReplies;TotalCommentReplyLikes;PostsbyAdmin;CommentsbyAdmin;LikesByAdmin;LikesOnAdminPosts;CommentsOnAdminPosts;LikesOnAdminComments;NonAdminPosts;NonAdminComments;LikesOnNonAdminPosts;LikesOnNonAdminComments;NonAdminCommentLikes;TotalUniqueActors;totaluniquePosters;TotalUniqueCommenters;TotalUniqueLikers;TotalUniqueCommentLikers;TotalUniqueCommentRepliers;TotalUniqueCommentReplyLikers
+1;144529471293;2016-08;1174;1475;27018;2043;802;1065;324;27;83;52;28546;1457;10;79;1457;469;794;777;28087;37;1339;26848;592;419;200
+2;144529471293;2016-09;1073;3180;73635;5932;2366;1888;1071;38;69;81;73555;3537;30;101;3226;3336;2356;2290;74998;49;2976;73446;2110;878;549
+3;144529471293;2016-10;1078;3429;66712;8931;1562;2505;426;27;67;26;66612;3563;77;87;3463;2028;1540;1554;60621;37;3308;66677;1434;1540;257

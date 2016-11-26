@@ -3,9 +3,13 @@ import nltk.classify.util
 from nltk import precision, recall
 from nltk.classify import NaiveBayesClassifier
 from nltk.corpus import movie_reviews
+import csv
 import tokinator
+import language_detection
 from nltk.corpus.reader import CategorizedPlaintextCorpusReader
 import os
+
+training_set = []
 
 def evaluate(corp, feature_detector=tokinator.bag_of_best_bigram_words):
     negids = corp.fileids('neg')
