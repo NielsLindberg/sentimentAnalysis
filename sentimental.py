@@ -120,6 +120,6 @@ methods = list([tokinator.bag_of_words, tokinator.bag_of_non_stopwords,
                 tokinator.bag_of_bigrams_words, tokinator.bag_of_best_bigram_words,
                 tokinator.bag_of_best_words])
 
-evaluate(tokinator.bag_of_best_bigram_words)
-#for method in methods:
-#    evaluate(method)
+
+for method in methods:
+    evaluate(method)

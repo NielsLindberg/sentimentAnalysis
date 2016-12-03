@@ -38,9 +38,11 @@ def add_language_to_csv(in_file_path, default_langauge, text_column=21, encoding
 
             writer.writerows(new_data)
 
-in_files = [('FullRawFile_easyJet_66', 'english'), ('FullRawFile_Norwegian_74', 'norwegian'),
-            ('FullRawFile_Ryanair_94', 'english'), ('FullRawFile_SAS_73', 'swedish'),
-            ('FullRawFile_AerLingus_64', 'english')]
+# in_files = [('FullRawFile_easyJet_66', 'english'), ('FullRawFile_Norwegian_74', 'norwegian'),
+#            ('FullRawFile_Ryanair_94', 'english'), ('FullRawFile_SAS_73', 'swedish'),
+#            ('FullRawFile_AerLingus_64', 'english')]
+
+in_files = [('FullRawFile_Eurowings_19', 'english'), ('FullRawFile_Norwegian_96', 'norwegian'), ('FullRawFile_Lufthansa_18', 'english')]
 
 for in_file in in_files:
     try:
