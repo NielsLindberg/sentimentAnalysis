@@ -16,7 +16,7 @@ def bag_of_best_words(bestwords, words):
     return dict([(word, True) for word in words if word in bestwords])
 
 
-def best_words(corp, limit=10000):
+def best_words(dataset, limit=10000):
     word_fd = FreqDist()
     label_word_fd = ConditionalFreqDist()
 

@@ -1,4 +1,3 @@
-import sys
 from nltk import wordpunct_tokenize
 from nltk.corpus import stopwords
 from nltk.corpus import words
@@ -49,7 +48,7 @@ def _calculate_languages_ratios(text):
     return languages_ratios
 
 
-def detect_language(text):
+def detect_language(text, default_language):
     """
     Calculate probability of given text to be written in several languages and
     return the highest scored.
@@ -71,14 +70,14 @@ def detect_language(text):
         if len([word for word, pos in tagged_sent if pos == 'NNP']) > 1:
             most_rated_language = 'name'
         else:
-            split_tokens = wordpunct_tokenize(text)
-            english_words = words.words()
-            if [word for word in split_tokens if word.lower() in english_words]:
-                most_rated_language = 'english'
-            else:
-                most_rated_language = 'undefined'
-    elif ratios[most_rated_language] == ratios['english']:
-        most_rated_language = 'english'
+            # split_tokens = wordpunct_tokenize(text)
+            # english_words = words.words()
+            # if [word for word in split_tokens if word.lower() in english_words]:
+            #     most_rated_language = 'english'
+            # else:
+            most_rated_language = 'undefined'
+    elif ratios[most_rated_language] == ratios[default_language]:
+        most_rated_language = default_language
     return most_rated_language
 
 

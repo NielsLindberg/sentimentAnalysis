@@ -10,7 +10,7 @@ def file_len(file_name, encoding):
     return i + 1
 
 
-def add_language_to_csv(in_file_path, text_column=21, encoding='latin', delim=';'):
+def add_language_to_csv(in_file_path, default_langauge, text_column=21, encoding='latin', delim=';'):
     total_rows = file_len(in_file_path + '.csv', encoding)
     with open(in_file_path + '.csv', 'r', encoding=encoding) as csv_input:
         with open(in_file_path + '_lang.csv', 'w', encoding=encoding) as csv_output:
@@ -27,7 +27,7 @@ def add_language_to_csv(in_file_path, text_column=21, encoding='latin', delim=';
 
             for row in reader:
                 if len(row[text_column]) > 0:
-                    row.append(language_detection.detect_language(row[text_column]))
+                    row.append(language_detection.detect_language(row[text_column], default_langauge))
 
                 else:
                     row.append('Not text')
@@ -38,13 +38,15 @@ def add_language_to_csv(in_file_path, text_column=21, encoding='latin', delim=';
 
             writer.writerows(new_data)
 
-in_files = ['FullRawFile_easyJet_66', 'FullRawFile_Norwegian_74', 'FullRawFile_Ryanair_94', 'FullRawFile_SAS_73']
+in_files = [('FullRawFile_easyJet_66', 'english'), ('FullRawFile_Norwegian_74', 'norwegian'),
+            ('FullRawFile_Ryanair_94', 'english'), ('FullRawFile_SAS_73', 'swedish'),
+            ('FullRawFile_AerLingus_64', 'english')]
 
 for in_file in in_files:
     try:
-        os.remove('data/' + in_file + '_lang.csv')
+        os.remove('data/' + in_file[0] + '_lang.csv')
 
     except FileNotFoundError:
         pass
 
-    add_language_to_csv('data/' + in_file)
+    add_language_to_csv('data/' + in_file[0], in_file[1])
