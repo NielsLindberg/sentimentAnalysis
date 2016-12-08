@@ -16,12 +16,14 @@ def add_language_to_csv(in_file_path, default_language, site_admin, test_limit, 
         reader = csv.reader(csv_input, delimiter=delim)
 
         row = next(reader)
-        row.append('Language')
-        row.append('Sentiment')
-        row.append('File')
-        row.append('Admin')
-        new_data.append(row)
-        test_data.append(row)
+        if not new_data:
+            row.append('Language')
+            row.append('Sentiment')
+            row.append('File')
+            row.append('Admin')
+            new_data.append(row)
+            test_data.append(row)
+
         current_row = 1
         test_count = 0
         print('\nAdding language to ' + in_file_path)
@@ -34,14 +36,14 @@ def add_language_to_csv(in_file_path, default_language, site_admin, test_limit, 
                 row.append('')
                 row.append(in_file_path)
 
-                if row[7] == site_admin:
+                if row[10] == site_admin:
                     row.append('Yes')
                 else:
                     row.append('No')
 
-                if language == 'english' and test_count < test_limit:
-                    test_count += 1
-                    test_data.append(row)
+                    if language == 'english' and test_count < test_limit:
+                        test_count += 1
+                        test_data.append(row)
 
                 new_data.append(row)
 
