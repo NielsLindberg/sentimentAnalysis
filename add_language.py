@@ -66,7 +66,7 @@ def create_output_csv(in_files):
 
     except FileNotFoundError:
         pass
-
+w
     with open(outfile_path, 'w', encoding='utf8') as csv_output:
         with open(testfile_path, 'w', encoding='utf8') as csv_test:
             writer = csv.writer(csv_output, delimiter=';', lineterminator='\n')
@@ -84,6 +84,6 @@ new_data = []
 input_csv = [('FullRawFile_easyJet_66', 'english', 'easyJet', 145), ('FullRawFile_Norwegian_74', 'norwegian', 'Norwegian', 25),
              ('FullRawFile_Ryanair_94', 'english', 'Ryanair', 120), ('FullRawFile_SAS_73', 'swedish', 'SAS', 60),
              ('FullRawFile_AerLingus_64', 'english', 'Aer Lingus', 150), ('FullRawFile_Eurowings_19', 'english', 'Eurowings', 150),
-             ('FullRawFile_Lufthansa_18', 'english', 'Lufthansa', 275)]
+             ('FullRawFile_Lufthansa_18', 'german', 'Lufthansa', 150)]
 
 create_output_csv(input_csv)
