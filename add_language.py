@@ -66,7 +66,7 @@ def create_output_csv(in_files):
 
     except FileNotFoundError:
         pass
-w
+
     with open(outfile_path, 'w', encoding='utf8') as csv_output:
         with open(testfile_path, 'w', encoding='utf8') as csv_test:
             writer = csv.writer(csv_output, delimiter=';', lineterminator='\n')

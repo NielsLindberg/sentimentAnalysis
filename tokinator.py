@@ -26,7 +26,7 @@ def bag_of_non_stopwords(words, stop_file='english'):
     return bag_of_words_not_in_set(words, bad_words)
 
 
-def bag_of_bigrams_words(words, score_fn=BigramAssocMeasures.chi_sq, n=200):
+def bag_of_bigram_words(words, score_fn=BigramAssocMeasures.chi_sq, n=200):
     # returns a call to bag of non stop words with a list of the best 200 bigrams
     # together with all the singular words
     bigram_finder = BigramCollocationFinder.from_words(words)

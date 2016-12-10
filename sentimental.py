@@ -8,6 +8,12 @@ from nltk.metrics import BigramAssocMeasures
 from nltk.probability import FreqDist, ConditionalFreqDist
 
 
+def file_len(file_name, encoding):
+    with open(file_name, encoding=encoding) as f:
+        for i, l in enumerate(f):
+            pass
+    return i + 1
+
 def word_extend(data):
     data_new = []
     for word in data:
@@ -80,12 +86,18 @@ def split_sets(data_path, text_column, sentiment_column, limit):
     return neudata, posdata, negdata, alldata, best_words
 
 
-def evaluate(feature_name, feature_detector, use_best_words, limit):
+def train(feature_name, feature_detector, use_best_words, limit):
 
+    # input csv file with manually classified posts
     data_path = 'D:/Workspace/CBS/BigSocialData/SentimentAnalysis/data/all_text_actions_test_fix.csv'
+
+    # call function read the text(21) and split into sentiment(23) return a best words by limit
     neudata, posdata, negdata, alldata, best_words = split_sets(data_path, 21, 23, limit)
 
+    # only some of the tokinator help function uses the best_words input which is handled by the
+    # use_best_words parameter
     if use_best_words:
+        # for every
         negfeats = [(feature_detector(best_words, f), 'neg') for f in word_split(negdata)]
         posfeats = [(feature_detector(best_words, f), 'pos') for f in word_split(posdata)]
         neufeats = [(feature_detector(best_words, f), 'neu') for f in word_split(neudata)]
@@ -119,6 +131,7 @@ def evaluate(feature_name, feature_detector, use_best_words, limit):
     neu_recall = recall(refsets['neu'], testsets['neu'])
 
     classifier_with_accuracy = {'classifier': classifier, 'feature_name': feature_name,
+                                'feature_detector': feature_detector, 'best_words': use_best_words,
                                 'accuracy': accuracy, 'limit': limit,
                                 'pos_precision': pos_precision, 'pos_recall': pos_recall,
                                 'neg_precision': neg_precision, 'neg_recall': neg_recall,
@@ -130,16 +143,16 @@ def evaluate(feature_name, feature_detector, use_best_words, limit):
 # name and a boolean to indicate wether or not to parse a list of best words
 # to filter in the tokinator process
 methods = [('bag_of_words', tokinator.bag_of_words, False),
-           ('bag of non stop words', tokinator.bag_of_non_stopwords, False),
+           ('bagof non stop words', tokinator.bag_of_non_stopwords, False),
            ('bag of best words', tokinator.bag_of_best_words, True),
-           ('bag of bigrams words', tokinator.bag_of_bigrams_words, False),
+           ('bag of bigrams words', tokinator.bag_of_bigram_words, False),
            ('bag of best bigrams words', tokinator.bag_of_best_bigram_words, True)]
 
 # a list to hold all the classification objects and their accuracy
 method_outputs = []
 
 # the outer loop calls different limits of best words to filter in the tokinator process
-for limit in range(0, 10001, 100):
+for limit in range(100, 101, 100):
     print('classifying limit:', limit)
 
     # the inner loop calls different tokinator methods with the outer limit
@@ -147,7 +160,7 @@ for limit in range(0, 10001, 100):
         # the results are parsed to the outputs container
         if (limit > 0 and method[2]) or limit == 0:
             # Only evaluate the methods that don't use the limit once on limit == 0
-            method_outputs.append(evaluate(method[0], method[1], method[2], limit))
+            method_outputs.append(train(method[0], method[1], method[2], limit))
 
 # Sorts all the outputs by their accuracy and filters on the top 5.
 method_outputs_top = sorted(method_outputs, key=lambda w_s: w_s['accuracy'], reverse=True)[:5]
@@ -165,3 +178,27 @@ for method_output in method_outputs_top:
     print('neu recall:', method_output['neu_recall'])
     method_output['classifier'].show_most_informative_features(5)
 
+# classify all
+in_file_path = 'data/all_text_actions.csv'
+out_file_path = 'data/all_text_actions_sentiment.csv'
+encoding = 'utf8'
+delim = ';'
+
+best_method = method_outputs_top[0]
+total_rows = file_len(in_file_path, encoding)
+
+with open(in_file_path, 'r', encoding=encoding) as csv_input:
+    with open(out_file_path, 'w', encoding='utf8') as csv_output:
+        reader = csv.reader(csv_input, delimiter=delim)
+        writer = csv.writer(csv_output, delimiter=';', lineterminator='\n')
+
+        new_data = []
+        current_row = 0
+        for row in reader:
+            if row[22] == 'english':
+                row[23] = best_method['classifier'].classify(tokinator.bag_of_bigram_words(row[21]))
+            new_data.append(row)
+            if current_row % 1000 == 0:
+                print('\x1b[2K\r Classifying: ' + str(round(current_row * 100 / total_rows)) + '%', end='')
+            current_row += 1
+        writer.writerows(new_data)
