@@ -14,6 +14,7 @@ def file_len(file_name, encoding):
             pass
     return i + 1
 
+
 def word_extend(data):
     data_new = []
     for word in data:
@@ -55,29 +56,29 @@ def split_sets(data_path, text_column, sentiment_column, limit):
 
     for word in word_extend(posdata):
         word_fd[word.lower()] += 1
-        label_word_fd['pos'][word.lower()] += 1
+        label_word_fd['Positive'][word.lower()] += 1
 
     for word in word_extend(negdata):
         word_fd[word.lower()] += 1
-        label_word_fd['neg'][word.lower()] += 1
+        label_word_fd['Negative'][word.lower()] += 1
 
     for word in word_extend(neudata):
         word_fd[word.lower()] += 1
-        label_word_fd['neu'][word.lower()] += 1
+        label_word_fd['Neutral'][word.lower()] += 1
 
-    pos_word_count = label_word_fd['pos'].N()
-    neg_word_count = label_word_fd['neg'].N()
-    neu_word_count = label_word_fd['neu'].N()
+    pos_word_count = label_word_fd['Positive'].N()
+    neg_word_count = label_word_fd['Negative'].N()
+    neu_word_count = label_word_fd['Neutral'].N()
     total_word_count = pos_word_count + neg_word_count + neu_word_count
 
     word_scores = {}
 
     for word, freq in word_fd.items():
-        pos_score = BigramAssocMeasures.chi_sq(label_word_fd['pos'][word],
+        pos_score = BigramAssocMeasures.chi_sq(label_word_fd['Positive'][word],
                                                (freq, pos_word_count), total_word_count)
-        neg_score = BigramAssocMeasures.chi_sq(label_word_fd['neg'][word],
+        neg_score = BigramAssocMeasures.chi_sq(label_word_fd['Negative'][word],
                                                (freq, neg_word_count), total_word_count)
-        neu_score = BigramAssocMeasures.chi_sq(label_word_fd['neu'][word],
+        neu_score = BigramAssocMeasures.chi_sq(label_word_fd['Neutral'][word],
                                                (freq, neu_word_count), total_word_count)
         word_scores[word] = pos_score + neg_score + neu_score
 
@@ -86,32 +87,40 @@ def split_sets(data_path, text_column, sentiment_column, limit):
     return neudata, posdata, negdata, alldata, best_words
 
 
-def train(feature_name, feature_detector, use_best_words, limit):
-
-    # input csv file with manually classified posts
-    data_path = 'D:/Workspace/CBS/BigSocialData/SentimentAnalysis/data/all_text_actions_test_fix.csv'
-
-    # call function read the text(21) and split into sentiment(23) return a best words by limit
-    neudata, posdata, negdata, alldata, best_words = split_sets(data_path, 21, 23, limit)
-
-    # only some of the tokinator help function uses the best_words input which is handled by the
-    # use_best_words parameter
+def split_feats(label, data, feature_detector, use_best_words, best_words):
     if use_best_words:
-        # for every
-        negfeats = [(feature_detector(best_words, f), 'neg') for f in word_split(negdata)]
-        posfeats = [(feature_detector(best_words, f), 'pos') for f in word_split(posdata)]
-        neufeats = [(feature_detector(best_words, f), 'neu') for f in word_split(neudata)]
-    else:
-        negfeats = [(feature_detector(f), 'neg') for f in word_split(negdata)]
-        posfeats = [(feature_detector(f), 'pos') for f in word_split(posdata)]
-        neufeats = [(feature_detector(f), 'neu') for f in word_split(neudata)]
+        feats = [(feature_detector(best_words, f), label) for f in word_split(data)]
 
+    else:
+        feats = [(feature_detector(f), label) for f in word_split(data)]
+    return feats
+
+
+def create_train_test_sets(negfeats, posfeats, neufeats):
     negcutoff = int(len(negfeats) * 3 / 4)
     poscutoff = int(len(posfeats) * 3 / 4)
     neucutoff = int(len(neufeats) * 3 / 4)
 
     trainfeats = negfeats[:negcutoff] + posfeats[:poscutoff] + neufeats[:neucutoff]
     testfeats = negfeats[negcutoff:] + posfeats[poscutoff:] + neufeats[neucutoff:]
+    return trainfeats, testfeats
+
+
+def train(feature_name, feature_detector, use_best_words, limit):
+
+    # input csv file with manually classified posts
+    data_path = 'D:/Workspace/CBS/BigSocialData/SentimentAnalysis/data/all_text_actions_test.csv'
+
+    # call function read the text(21) and split into sentiment(23) return a best words by limit
+    neudata, posdata, negdata, alldata, best_words = split_sets(data_path, 21, 23, limit)
+
+    # only some of the tokinator help function uses the best_words input which is handled by the
+    # use_best_words parameter
+    negfeats = split_feats('Negative', negdata, feature_detector, use_best_words, best_words)
+    posfeats = split_feats('Positive', posdata, feature_detector, use_best_words, best_words)
+    neufeats = split_feats('Neutral', neudata, feature_detector, use_best_words, best_words)
+
+    trainfeats, testfeats = create_train_test_sets(negfeats, posfeats, neufeats)
 
     classifier = NaiveBayesClassifier.train(trainfeats)
     refsets = collections.defaultdict(set)
@@ -123,12 +132,12 @@ def train(feature_name, feature_detector, use_best_words, limit):
         testsets[observed].add(i)
 
     accuracy = nltk.classify.util.accuracy(classifier, testfeats)
-    pos_precision = precision(refsets['pos'], testsets['pos'])
-    pos_recall = recall(refsets['pos'], testsets['pos'])
-    neg_precision = precision(refsets['neg'], testsets['neg'])
-    neg_recall = recall(refsets['pos'], testsets['pos'])
-    neu_precision = precision(refsets['neu'], testsets['neu'])
-    neu_recall = recall(refsets['neu'], testsets['neu'])
+    pos_precision = precision(refsets['Positive'], testsets['Positive'])
+    pos_recall = recall(refsets['Positive'], testsets['Positive'])
+    neg_precision = precision(refsets['Negative'], testsets['Negative'])
+    neg_recall = recall(refsets['Negative'], testsets['Negative'])
+    neu_precision = precision(refsets['Neutral'], testsets['Neutral'])
+    neu_recall = recall(refsets['Neutral'], testsets['Neutral'])
 
     classifier_with_accuracy = {'classifier': classifier, 'feature_name': feature_name,
                                 'feature_detector': feature_detector, 'best_words': use_best_words,
@@ -152,7 +161,7 @@ methods = [('bag_of_words', tokinator.bag_of_words, False),
 method_outputs = []
 
 # the outer loop calls different limits of best words to filter in the tokinator process
-for limit in range(100, 101, 100):
+for limit in range(0, 1001, 1000):
     print('classifying limit:', limit)
 
     # the inner loop calls different tokinator methods with the outer limit
@@ -196,7 +205,8 @@ with open(in_file_path, 'r', encoding=encoding) as csv_input:
         current_row = 0
         for row in reader:
             if row[22] == 'english':
-                row[23] = best_method['classifier'].classify(tokinator.bag_of_bigram_words(row[21]))
+                features = tokinator.bag_of_bigram_words(row[21])
+                row[23] = best_method['classifier'].classify(features)
             new_data.append(row)
             if current_row % 1000 == 0:
                 print('\x1b[2K\r Classifying: ' + str(round(current_row * 100 / total_rows)) + '%', end='')

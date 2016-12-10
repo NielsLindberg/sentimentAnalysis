@@ -31,8 +31,9 @@ def bag_of_bigram_words(words, score_fn=BigramAssocMeasures.chi_sq, n=200):
     # together with all the singular words
     bigram_finder = BigramCollocationFinder.from_words(words)
     bigrams = bigram_finder.nbest(score_fn, n)
-    words_list = [word for word in words]
-    return bag_of_non_stopwords(words_list + bigrams)
+    bigrams_words = dict([(bigram, True) for bigram in bigrams])
+    bigrams_words.update(bag_of_non_stopwords(words))
+    return bigrams_words
 
 
 def bag_of_best_bigram_words(best_words, words, score_fn=BigramAssocMeasures.chi_sq, n=200):
@@ -41,5 +42,5 @@ def bag_of_best_bigram_words(best_words, words, score_fn=BigramAssocMeasures.chi
     bigram_finder = BigramCollocationFinder.from_words(words)
     bigrams = bigram_finder.nbest(score_fn, n)
     best_words_and_bigrams = dict([(bigram, True) for bigram in bigrams])
-    best_words_and_bigrams.update(bag_of_best_words(best_words, words))
-    return bag_of_non_stopwords(best_words_and_bigrams)
+    best_words_and_bigrams.update(bag_of_non_stopwords(bag_of_best_words(best_words, words)))
+    return best_words_and_bigrams
