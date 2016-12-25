@@ -6,6 +6,12 @@ import tokinator
 import csv
 from nltk.metrics import BigramAssocMeasures
 from nltk.probability import FreqDist, ConditionalFreqDist
+import time
+
+
+time_str = time.strftime("%Y%m%d-%H%M%S")
+encoding = 'utf8'
+delim = ';'
 
 
 def file_len(file_name, encoding):
@@ -174,6 +180,38 @@ for limit in range(0, 1001, 1000):
 # Sorts all the outputs by their accuracy and filters on the top 5.
 method_outputs_top = sorted(method_outputs, key=lambda w_s: w_s['accuracy'], reverse=True)[:5]
 
+
+def check_sodata_accuracy(training_path):
+    with open(training_path, 'r', encoding=encoding) as csv_train:
+        csv_reader = csv.reader(csv_train, delimiter=delim)
+
+        refsets = collections.defaultdict(set)
+        testsets = collections.defaultdict(set)
+
+        for i, row in enumerate(csv_reader):
+            refsets[row[23]].add(i)
+            testsets[row[26]].add(i)
+
+        pos_precision = precision(refsets['1'], testsets['Positive'])
+        pos_recall = recall(refsets['1'], testsets['Positive'])
+        neg_precision = precision(refsets['2'], testsets['Negative'])
+        neg_recall = recall(refsets['2'], testsets['Negative'])
+        neu_precision = precision(refsets['0'], testsets['Neutral'])
+        neu_recall = recall(refsets['0'], testsets['Neutral'])
+
+        classifier_with_accuracy = {'classifier': 'N/A', 'feature_name': 'SODATA',
+                                    'feature_detector': 'SODATA', 'best_words': False,
+                                    'accuracy': 'N/A', 'limit': 0,
+                                    'pos_precision': pos_precision, 'pos_recall': pos_recall,
+                                    'neg_precision': neg_precision, 'neg_recall': neg_recall,
+                                    'neu_precision': neu_precision, 'neu_recall': neu_recall}
+        return classifier_with_accuracy
+
+# Add SODATA
+training_path = 'data/all_text_actions_test.csv'
+method_outputs_top.append(check_sodata_accuracy(training_path))
+
+
 # Prints out all the precision information on the top classification results
 for method_output in method_outputs_top:
     print('\ntokinator:', method_output['feature_name'])
@@ -185,19 +223,17 @@ for method_output in method_outputs_top:
     print('neg recall:', method_output['neg_recall'])
     print('neu precision:', method_output['neu_precision'])
     print('neu recall:', method_output['neu_recall'])
-    method_output['classifier'].show_most_informative_features(5)
+    # method_output['classifier'].show_most_informative_features(5)
 
 # classify all
 in_file_path = 'data/all_text_actions.csv'
-out_file_path = 'data/all_text_actions_sentiment.csv'
-encoding = 'utf8'
-delim = ';'
+out_file_path = 'data/all_text_actions_sentiment' + time_str + '.csv'
 
 best_method = method_outputs_top[0]
 total_rows = file_len(in_file_path, encoding)
 
 with open(in_file_path, 'r', encoding=encoding) as csv_input:
-    with open(out_file_path, 'w', encoding='utf8') as csv_output:
+    with open(out_file_path, 'w', encoding=encoding) as csv_output:
         reader = csv.reader(csv_input, delimiter=delim)
         writer = csv.writer(csv_output, delimiter=';', lineterminator='\n')
 
@@ -212,3 +248,6 @@ with open(in_file_path, 'r', encoding=encoding) as csv_input:
                 print('\x1b[2K\r Classifying: ' + str(round(current_row * 100 / total_rows)) + '%', end='')
             current_row += 1
         writer.writerows(new_data)
+
+
+
