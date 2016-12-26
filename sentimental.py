@@ -10,6 +10,7 @@ import time
 
 
 time_str = time.strftime("%Y%m%d-%H%M%S")
+training_path = 'data/all_text_actions_test.csv'
 encoding = 'utf8'
 delim = ';'
 
@@ -114,11 +115,8 @@ def create_train_test_sets(negfeats, posfeats, neufeats):
 
 def train(feature_name, feature_detector, use_best_words, limit):
 
-    # input csv file with manually classified posts
-    data_path = 'D:/Workspace/CBS/BigSocialData/SentimentAnalysis/data/all_text_actions_test.csv'
-
     # call function read the text(21) and split into sentiment(23) return a best words by limit
-    neudata, posdata, negdata, alldata, best_words = split_sets(data_path, 21, 23, limit)
+    neudata, posdata, negdata, alldata, best_words = split_sets(training_path, 21, 23, limit)
 
     # only some of the tokinator help function uses the best_words input which is handled by the
     # use_best_words parameter
@@ -167,7 +165,7 @@ methods = [('bag_of_words', tokinator.bag_of_words, False),
 method_outputs = []
 
 # the outer loop calls different limits of best words to filter in the tokinator process
-for limit in range(0, 1001, 1000):
+for limit in range(0, 801, 800):
     print('classifying limit:', limit)
 
     # the inner loop calls different tokinator methods with the outer limit
@@ -187,31 +185,62 @@ def check_sodata_accuracy(training_path):
 
         refsets = collections.defaultdict(set)
         testsets = collections.defaultdict(set)
-
+        results = []
+        gold = []
+        label = ''
         for i, row in enumerate(csv_reader):
-            refsets[row[23]].add(i)
+            if row[23] == '2':
+                label = 'Negative'
+            elif row[23] == '1':
+                label = 'Positive'
+            elif row[23] == '0':
+                label = 'Neutral'
+            gold.append(label)
+            refsets[label].add(i)
             testsets[row[26]].add(i)
+            results.append(row[26])
 
-        pos_precision = precision(refsets['1'], testsets['Positive'])
-        pos_recall = recall(refsets['1'], testsets['Positive'])
-        neg_precision = precision(refsets['2'], testsets['Negative'])
-        neg_recall = recall(refsets['2'], testsets['Negative'])
-        neu_precision = precision(refsets['0'], testsets['Neutral'])
-        neu_recall = recall(refsets['0'], testsets['Neutral'])
+        # Since we dont have a classifier object we manually calculate the accuracy
+        # We do it the same way as nltk.util but instead of using the classifier to compare
+        # We just compare between the result and the gold standard (refset)
+        correct = [l == r for (l, r) in zip(gold, results)]
+        accuracy_manual = sum(correct) / len(correct)
+        pos_precision = precision(refsets['Positive'], testsets['Positive'])
+        pos_recall = recall(refsets['Positive'], testsets['Positive'])
+        neg_precision = precision(refsets['Negative'], testsets['Negative'])
+        neg_recall = recall(refsets['Negative'], testsets['Negative'])
+        neu_precision = precision(refsets['Neutral'], testsets['Neutral'])
+        neu_recall = recall(refsets['Neutral'], testsets['Neutral'])
 
         classifier_with_accuracy = {'classifier': 'N/A', 'feature_name': 'SODATA',
                                     'feature_detector': 'SODATA', 'best_words': False,
-                                    'accuracy': 'N/A', 'limit': 0,
+                                    'accuracy': accuracy_manual, 'limit': 0,
                                     'pos_precision': pos_precision, 'pos_recall': pos_recall,
                                     'neg_precision': neg_precision, 'neg_recall': neg_recall,
                                     'neu_precision': neu_precision, 'neu_recall': neu_recall}
         return classifier_with_accuracy
 
-# Add SODATA
-training_path = 'data/all_text_actions_test.csv'
+
+def classify_all():
+    with open(in_file_path, 'r', encoding=encoding) as csv_input:
+        with open(out_file_path, 'w', encoding=encoding) as csv_output:
+            reader = csv.reader(csv_input, delimiter=delim)
+            writer = csv.writer(csv_output, delimiter=';', lineterminator='\n')
+
+            new_data = []
+            current_row = 0
+            for row in reader:
+                if row[22] == 'english' and row[0] == 'POST':
+                    features = tokinator.bag_of_bigram_words(row[21])
+                    row[23] = best_method['classifier'].classify(features)
+                new_data.append(row)
+                if current_row % 1000 == 0:
+                    print('\x1b[2K\r Classifying: ' + str(round(current_row * 100 / total_rows)) + '%', end='')
+                current_row += 1
+            writer.writerows(new_data)
+
+
 method_outputs_top.append(check_sodata_accuracy(training_path))
-
-
 # Prints out all the precision information on the top classification results
 for method_output in method_outputs_top:
     print('\ntokinator:', method_output['feature_name'])
@@ -232,22 +261,8 @@ out_file_path = 'data/all_text_actions_sentiment' + time_str + '.csv'
 best_method = method_outputs_top[0]
 total_rows = file_len(in_file_path, encoding)
 
-with open(in_file_path, 'r', encoding=encoding) as csv_input:
-    with open(out_file_path, 'w', encoding=encoding) as csv_output:
-        reader = csv.reader(csv_input, delimiter=delim)
-        writer = csv.writer(csv_output, delimiter=';', lineterminator='\n')
+# classify_all()
 
-        new_data = []
-        current_row = 0
-        for row in reader:
-            if row[22] == 'english':
-                features = tokinator.bag_of_bigram_words(row[21])
-                row[23] = best_method['classifier'].classify(features)
-            new_data.append(row)
-            if current_row % 1000 == 0:
-                print('\x1b[2K\r Classifying: ' + str(round(current_row * 100 / total_rows)) + '%', end='')
-            current_row += 1
-        writer.writerows(new_data)
 
 
 
