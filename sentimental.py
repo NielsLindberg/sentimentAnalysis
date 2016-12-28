@@ -1,6 +1,5 @@
 import collections
 import nltk.classify.util
-from nltk import wordpunct_tokenize
 from nltk import precision, recall
 from nltk.classify import NaiveBayesClassifier
 from nltk.corpus import stopwords
@@ -14,10 +13,13 @@ from nltk.tokenize import RegexpTokenizer
 tokenizer = RegexpTokenizer("[\w']+")
 time_str = time.strftime("%Y%m%d-%H%M%S")
 training_path = 'data/all_text_actions_test_post_sod.csv'
+training_path_with_comments = 'data/all_text_actions_test.csv'
 encoding = 'utf8'
 delim = ';'
 
 
+# file len is used to calculate the length of the file, which is used to calculate current percentages of
+# various operations that loop through records in a file.
 def file_len(file_name, encoding):
     with open(file_name, encoding=encoding) as f:
         for i, l in enumerate(f):
@@ -25,22 +27,28 @@ def file_len(file_name, encoding):
     return i + 1
 
 
+# Word extend is used when we want to split the words from each input but add them all together in the same list and not
+# one sub list per text record
 def word_extend(data):
     data_new = []
     for text in data:
-        word_filter = [i.lower() for i in tokenizer.tokenize(text) if i.isalpha()]
+        word_filter = [i.lower() for i in tokenizer.tokenize(text)]
         data_new.extend(word_filter)
     return data_new
 
 
+# Word split is used when we want to split the tokenz per input into different items in a list
 def word_split(data):
     data_new = []
     for word in data:
-        word_filter = [i.lower() for i in tokenizer.tokenize(word) if i.isalpha()]
+        word_filter = [i.lower() for i in tokenizer.tokenize(word)]
         data_new.append(word_filter)
     return data_new
 
 
+# Split sets takes a csv path, columns for text and sentiment aswell as bestwords limit
+# as input, it returns lists for positive, neutral, negative and all records aswell as a list
+# of the most important words for each label according to the limit
 def split_sets(data_path, text_column, sentiment_column, limit):
     neudata = []
     posdata = []
@@ -101,6 +109,8 @@ def split_sets(data_path, text_column, sentiment_column, limit):
         neu_scores[word] = BigramAssocMeasures.chi_sq(label_word_fd['Neutral'][word],
                                                       (freq, neu_word_count), total_word_count)
 
+    # applying the limit to each label as words in neutral and positive labels automatically
+    # have higher scores due to most of the records being negative
     best_pos = sorted(pos_scores.items(), key=lambda w_s: w_s[1], reverse=True)[:limit]
     best_neg = sorted(neg_scores.items(), key=lambda w_s: w_s[1], reverse=True)[:limit]
     best_neu = sorted(neu_scores.items(), key=lambda w_s: w_s[1], reverse=True)[:limit]
@@ -187,7 +197,7 @@ def check_mutato_accuracy(training_path):
             results.append(row[26])
 
         # Since we dont have a classifier object we manually calculate the accuracy
-        # We do it the same way as nltk.util but instead of using the classifier to compare
+        # We do it the same way as nltk.util.accuracy but instead of using the classifier to compare
         # We just compare between the result and the gold standard (refset)
         correct = [l == r for (l, r) in zip(gold, results)]
         accuracy_manual = sum(correct) / len(correct)
@@ -198,8 +208,8 @@ def check_mutato_accuracy(training_path):
         neu_precision = precision(refsets['Neutral'], testsets['Neutral'])
         neu_recall = recall(refsets['Neutral'], testsets['Neutral'])
 
-        classifier_with_accuracy = {'classifier': 'N/A', 'feature_name': 'SODATA',
-                                    'feature_detector': 'SODATA', 'best_words': False,
+        classifier_with_accuracy = {'classifier': 'N/A', 'feature_name': 'MUTATO',
+                                    'feature_detector': 'MUTATO', 'best_words': False,
                                     'accuracy': accuracy_manual, 'limit': 0,
                                     'pos_precision': pos_precision, 'pos_recall': pos_recall,
                                     'neg_precision': neg_precision, 'neg_recall': neg_recall,
@@ -217,7 +227,7 @@ def classify_all(classifier_plus):
             current_row = 0
             for row in reader:
                 if row[22] == 'english' and row[0] == 'POST':
-                    words = [i.lower() for i in tokenizer.tokenize(row[21]) if i.isalpha()]
+                    words = [i.lower() for i in tokenizer.tokenize(row[21])]
                     if classifier_plus['best_words']:
                         features = classifier_plus['feature_detector'](classifier_plus['best_words_list'], words)
                     else:
@@ -242,7 +252,7 @@ methods = [('bag of non stop words', tokinator.bag_of_non_stopwords, False),
 method_outputs = []
 
 # the outer loop calls different limits of best words to filter in the tokinator process
-for limit in range(0, 10001, 100):
+for limit in range(0, 501, 500):
     print('classifying limit:', limit)
 
     # the inner loop calls different tokinator methods with the outer limit
