@@ -19,6 +19,11 @@ def bag_of_best_words(best_words, words):
     return dict([(word, True) for word in words if word in best_words])
 
 
+def bag_of_best_words_non_stopwords(best_words, words):
+    # First removes stop words then filters on best words.
+    return bag_of_best_words(best_words, bag_of_non_stopwords(words))
+
+
 def bag_of_non_stopwords(words, stop_file='english'):
     # returns a call to the bag of words not in set parsing in the full list of words
     # together with the list of english stop words.

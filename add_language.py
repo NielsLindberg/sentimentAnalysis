@@ -41,7 +41,7 @@ def add_language_to_csv(in_file_path, default_language, site_admin, test_limit, 
                 else:
                     row.append('No')
 
-                    if language == 'english'  and row[0] == 'POST' and test_count < test_limit:
+                    if language == 'english' and row[0] == 'POST' and test_count < test_limit:
                         test_count += 1
                         test_data.append(row)
 
