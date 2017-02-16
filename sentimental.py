@@ -13,7 +13,7 @@ from nltk.tokenize import RegexpTokenizer
 tokenizer = RegexpTokenizer("[\w']+")
 time_str = time.strftime("%Y%m%d-%H%M%S")
 training_path = 'data/all_text_actions_test_post_sod.csv'
-training_path_with_comments = 'data/all_text_actions_test.csv'
+training_path_with_comments = 'data/all_text_actions_test_sod.csv'
 encoding = 'utf8'
 delim = ';'
 
@@ -138,7 +138,7 @@ def create_train_test_sets(negfeats, posfeats, neufeats):
 
 def train(feature_name, feature_detector, use_best_words, limit):
     # call function read the text(21) and split into sentiment(23) return a best words by limit
-    neudata, posdata, negdata, alldata, best_words = split_sets(training_path, 21, 23, limit)
+    neudata, posdata, negdata, alldata, best_words = split_sets(training_path_with_comments, 21, 23, limit)
 
     # only some of the tokinator help function uses the best_words input which is handled by the
     # use_best_words parameter
@@ -222,11 +222,11 @@ def classify_all(classifier_plus):
         with open(out_file_path, 'w', encoding=encoding) as csv_output:
             reader = csv.reader(csv_input, delimiter=delim)
             writer = csv.writer(csv_output, delimiter=';', lineterminator='\n')
-
+            record_types = ['POST', 'POSTREPLY', 'COMMENT', 'COMMENTREPLY']
             new_data = []
             current_row = 0
             for row in reader:
-                if row[22] == 'english' and row[0] == 'POST':
+                if row[22] == 'english': # and row[0] in record_types:
                     words = [i.lower() for i in tokenizer.tokenize(row[21])]
                     if classifier_plus['best_words']:
                         features = classifier_plus['feature_detector'](classifier_plus['best_words_list'], words)
@@ -252,7 +252,7 @@ methods = [('bag of non stop words', tokinator.bag_of_non_stopwords, False),
 method_outputs = []
 
 # the outer loop calls different limits of best words to filter in the tokinator process
-for limit in range(0, 501, 500):
+for limit in range(500, 2001, 500):
     print('classifying limit:', limit)
 
     # the inner loop calls different tokinator methods with the outer limit
@@ -265,7 +265,7 @@ for limit in range(0, 501, 500):
 # Sorts all the outputs by their accuracy and filters on the top 5.
 method_outputs_top = sorted(method_outputs, key=lambda w_s: w_s['accuracy'], reverse=True)[:5]
 
-method_outputs_top.append(check_mutato_accuracy(training_path))
+method_outputs_top.append(check_mutato_accuracy(training_path_with_comments))
 # Prints out all the precision information on the top classification results
 for method_output in method_outputs_top:
     print('\ntokinator:', method_output['feature_name'])

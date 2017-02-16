@@ -41,7 +41,8 @@ def add_language_to_csv(in_file_path, default_language, site_admin, test_limit, 
                 else:
                     row.append('No')
 
-                    if language == 'english' and row[0] == 'POST' and test_count < test_limit:
+                    if language == 'english' and test_count < test_limit:
+                        # if language == 'english' and row[0] == 'POST' and test_count < test_limit:
                         test_count += 1
                         test_data.append(row)
 
@@ -55,7 +56,7 @@ def add_language_to_csv(in_file_path, default_language, site_admin, test_limit, 
 def create_output_csv(in_files):
 
     outfile_path = 'data/all_text_actions.csv'
-    testfile_path = 'data/all_text_actions_test_post.csv'
+    testfile_path = 'data/all_text_actions_test.csv'
     try:
         os.remove(outfile_path)
 
