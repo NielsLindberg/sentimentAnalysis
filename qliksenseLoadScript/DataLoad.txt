@@ -1,0 +1,85 @@
+CompanyFileMap:
+Mapping
+Load * INLINE [
+'data/FullRawFile_easyJet_66', 'EasyJet'
+'data/FullRawFile_Norwegian_74', 'Norwegian'
+'data/FullRawFile_Ryanair_94', 'Ryanair'
+'data/FullRawFile_SAS_73', 'SAS'
+'data/FullRawFile_AerLingus_64', 'AerLingus'
+'data/FullRawFile_Eurowings_19', 'Eurowings'
+'data/FullRawFile_Lufthansa_18', 'Lufthansa'];
+
+Facts:
+LOAD
+    "Date" as CreatedDateNew,
+    Company,
+    Passengers,
+    Revenue
+FROM [lib://SentimentData/findata\TransformedData.xlsx]
+(ooxml, embedded labels, table is Sheet1);
+
+Concatenate(Facts)
+LOAD
+    ActionType,
+    ActionSubType,
+    PostDbId,
+    DbId,
+    ParentDbId,
+    Fbid,
+    Date(Date#(Left([CreatedDate],10),'YYYY-MM-DD'),'DD/MM/YYYY') as [CreatedDateNew],
+    UpdatedDate,
+    PostType,
+    ActorId,
+    ActorName,
+    Link,
+    Caption,
+    Description,
+    CaptionNamePost,
+    StatusType,
+    Story,
+    Picture,
+    PropertyName,
+    PropertyText,
+    ShareCount,
+    TextValue,
+    Language,
+    Sentiment,
+    File,
+    ApplyMap('CompanyFileMap', File, null()) as Company,
+    Admin,
+    'All Text' as SentimentType
+FROM [lib://SentimentData/all_text_actions_sentiment20170213-231325.csv]
+(txt, utf8, embedded labels, delimiter is ';', msq);
+
+Concatenate(Facts)
+LOAD
+    ActionType,
+    ActionSubType,
+    PostDbId,
+    DbId,
+    ParentDbId,
+    Fbid,
+    Date(Date#(Left([CreatedDate],10),'YYYY-MM-DD'),'DD/MM/YYYY') as [CreatedDateNew],
+    UpdatedDate,
+    PostType,
+    ActorId,
+    ActorName,
+    Link,
+    Caption,
+    Description,
+    CaptionNamePost,
+    StatusType,
+    Story,
+    Picture,
+    PropertyName,
+    PropertyText,
+    ShareCount,
+    TextValue,
+    Language,
+    Sentiment,
+    File,
+    ApplyMap('CompanyFileMap', File,  null()) as Company,
+    Admin,
+    'Post Only' as SentimentType
+FROM [lib://SentimentData/all_text_actions_sentiment20170213-225217.csv]
+(txt, utf8, embedded labels, delimiter is ';', msq);

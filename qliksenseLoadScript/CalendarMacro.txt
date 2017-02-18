@@ -1,0 +1,79 @@
+SUB CalendarFromField(_field, _calendar, _prefix, _mindate, _maxdate)
+
+            $(_calendar).Temp:
+            load
+            date($(_mindate)+IterNo()) as [$(_field)]
+            AUTOGENERATE (1)
+            WHILE $(_mindate)+IterNo() <= $(_maxdate);
+
+            $(_calendar):
+            noconcatenate
+            load [$(_field)],
+                        Year([$(_field)])                                                                                                                                                                                  as [$(_prefix)Year],
+                        'Q' & Ceil(Month([$(_field)])/3)                                                                                                                                  as [$(_prefix)Quarter],
+                        Floor(Month([$(_field)]))                                                                                                                                                        as [$(_prefix)Month],
+                        Text(Date([$(_field)], 'MMM'))                                                                                                                                   as [$(_prefix)Month Name],
+                        Week([$(_field)])                                                                                                                                                                                as [$(_prefix)Week],
+                        Day([$(_field)])                                                                                                                                                                                   as [$(_prefix)Day],
+                        WeekDay([$(_field)])                                                                                                                                                 as [$(_prefix)Weekday],
+                         Text(WeekDay([$(_field)]))                                                                                                                                       as [$(_prefix)Weekday Name],
+                        Year([$(_field)]) & '-' & 'Q' & Ceil(Month([$(_field)])/3)                                                                     as [$(_prefix)Year Quarter],
+                        Num#(Date([$(_field)], 'YYYYMM'))                                                                                                             as [$(_prefix)Year_month_ID],
+                        Text(Date([$(_field)], 'YYYY-MM'))                                                                                                               as [$(_prefix)Year Month],
+                        Text(Date([$(_field)], 'YYYY-MMM'))                                                                                                                       as [$(_prefix)Year Month Name],
+                        WeekYear([$(_field)]) & '-' & Num(Week([$(_field)]), '00')                                                                           as [$(_prefix)Year Week]
+            resident $(_calendar).Temp;
+
+            drop table $(_calendar).Temp;
+
+            MapInvalidPeriod:
+            mapping load '', null() autogenerate 1;
+
+            $(_calendar).Temp:
+            noconcatenate
+            load *
+            resident $(_calendar);
+
+            // Add period by expanding calendar
+            left join ($(_calendar))
+            load distinct
+                        [$(_field)],
+                        applymap('MapInvalidPeriod', trim(subfield(
+                        If(InYearToDate([$(_field)], Today(0), 0), 'YTD')                                                                                                                              & ',' &   // YTD
+                        If(InYearToDate([$(_field)], Today(0), 0) and [$(_field)] <= MonthEnd(Today(0), -1), 'YTM')                                 & ',' &   // YTM
+                        If(InMonthToDate([$(_field)], Today(0), 0), 'MTD')                                                                                                                           & ',' &   // MTD
+                        If(Today(0) >= [$(_field)] and Today(0) < AddMonths([$(_field)], 12), '1Y')                         & ',' &               // 1Y
+         If([$(_field)] >= MonthStart(AddMonths(Today(0),-11), -1)  and [$(_field)] <= MonthEnd(Today(0), -1), '12M')                                     & ',' &   // YTM
+                        '' ,
+                         ',')))                                                                                                                                                                             as [$(_prefix)Period]
+
+            resident $(_calendar).Temp;
+
+            drop table $(_calendar).Temp;
+
+            $(_calendar).Temp:
+            noconcatenate
+            load *
+            resident $(_calendar);
+
+            left join($(_calendar))
+            load distinct
+            [$(_field)],
+            applymap('MapInvalidPeriod', trim(subfield(
+                                    If(Today(0)-[$(_field)] <= 1 and Today(0)-[$(_field)] >= -1 , '±1D')                                                                                                                                                 & ',' &   // 1D
+                        If(Today(0)-[$(_field)] <= 7 and Today(0)-[$(_field)] >= -7, '±1W')                                                                                                                                                  & ',' &               // 1W
+                        If(Today(0)-[$(_field)] <= 14 and Today(0)-[$(_field)] >= -14, '±2W')                                                                                                                                                          & ',' &   // 2W
+                        If(Today(0)-[$(_field)] <= 21 and Today(0)-[$(_field)] >= -21, '±3W')                                                                                                                                                           & ',' &               // 3W
+                        If(Today(0) < AddMonths([$(_field)], 1) and Today(0) > AddMonths([$(_field)], -1) , '±1M')                                   & ',' &               // 1M
+                        If(Today(0) < AddMonths([$(_field)], 3) and Today(0) > AddMonths([$(_field)], -3), '±3M')                                    & ',' &               // 3M
+                        If(Today(0) < AddMonths([$(_field)], 11) and Today(0) > AddMonths([$(_field)], -11), '±11M')                              & ',' &               // 12M
+                         '',
+                         ','))) as [$(_prefix)PeriodwithFuture]
+            resident $(_calendar).Temp;
+            drop table $(_calendar).Temp;
+END SUB
+
+/* CALENDAR */
+Let varFactDateMinDate = Num(YearStart(AddYears(Today(0),-10)));
+Let varFactDateMaxDate = Num(AddYears(Today(0),1));
+CALL CalendarFromField('CreatedDateNew', 'Global.Calendar.Reduced', '', $(varFactDateMinDate), $(varFactDateMaxDate));
